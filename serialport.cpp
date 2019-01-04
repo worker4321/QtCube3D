@@ -80,11 +80,16 @@ void serialPort::writeData(const QByteArray &data)
 
 void serialPort::readData()
 {
-    char tx[]="abcd";
-    QByteArray data = serial->readLine(10);
-    //console->putData(data);
-    qDebug() << "UART:" << data;
-    serial->write(tx,4);
+    // read data
+    if (serial->waitForReadyRead(10)) {
+        QByteArray data = serial->readAll();
+        while (serial->waitForReadyRead(10))
+              data += serial->readAll();
+
+        qDebug() << "UART:" << data;
+        //char tx[]="abcd";
+        //serial->write(tx,4);
+    }
 }
 
 
