@@ -49,11 +49,10 @@
 ****************************************************************************/
 
 #include "mainwidget.h"
-
 #include <QMouseEvent>
-
 #include <math.h>
 #include <serialport.h>
+#include <stdlib.h>
 
 MainWidget::MainWidget(QWidget *parent) :
     QOpenGLWidget(parent),
@@ -62,8 +61,12 @@ MainWidget::MainWidget(QWidget *parent) :
     angularSpeed(0)
 
 {
-    qDebug()<<"enter widget"<<endl;
-    serialPort *serial = new serialPort("COM12");
+
+    serial = new serialPort("COM12");
+    if(!serial){
+        qDebug()<<"new serialPort failed,exit"<<endl;
+        exit(-1);
+    }
     serial->start();
 }
 
@@ -211,12 +214,17 @@ void MainWidget::paintGL()
 
 //! [6]
     // Calculate model view transformation
+    int len = serial->RcvBuf.length();
+    if(len > FRAME_LENGTH){
+        serial->RcvBuf.remove(len -FRAME_LENGTH, FRAME_LENGTH);
+    }
     QMatrix4x4 matrix;
     matrix.translate(0.0, 0.0, -5.0);
     matrix.rotate(rotation);
 
     // Set modelview-projection matrix
     program.setUniformValue("mvp_matrix", projection * matrix);
+
 //! [6]
 
     // Use texture unit 0 which contains cube.png

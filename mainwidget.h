@@ -61,6 +61,7 @@
 #include <QBasicTimer>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLTexture>
+#include "serialport.h"
 
 class GeometryEngine;
 
@@ -97,6 +98,7 @@ private:
     QVector3D rotationAxis;
     qreal angularSpeed;
     QQuaternion rotation;
+    serialPort *serial;
 };
 
 #endif // MAINWIDGET_H

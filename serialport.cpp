@@ -1,4 +1,7 @@
 #include "serialport.h"
+#include <QMatrix4x4>
+#include <QQuaternion>
+#include <QVector2D>
 #include <QDebug>
 
 serialPort::serialPort(QString port):com(port)
@@ -7,6 +10,7 @@ serialPort::serialPort(QString port):com(port)
     if(serial == NULL){
         qDebug()<<"new QserialPort failed"<<endl;
     }
+    this->busy = false;
 
 }
 int serialPort::openSerialPort(QString port)
@@ -62,8 +66,7 @@ void serialPort::run()
     while(true){
         readData();
         msleep(10);
-        qDebug()<<"serial runing";
-        //exec();
+        //qDebug()<<"serial runing";
     }
 }
 void serialPort::closeSerialPort()
@@ -76,22 +79,70 @@ void serialPort::writeData(const QByteArray &data)
     serial->write(data);
 }
 
-
-
+void serialPort::setBusy(bool val)
+{
+    this->busy = val;
+}
+bool serialPort::getBusy(void)
+{
+    return this->busy;
+}
 void serialPort::readData()
 {
     // read data
-    if (serial->waitForReadyRead(10)) {
-        QByteArray data = serial->readAll();
+    if (serial->waitForReadyRead(10) && this->busy == false) {
+        this->busy = true;
+        RcvBuf.append( serial->readAll());
         while (serial->waitForReadyRead(10))
-              data += serial->readAll();
+             RcvBuf.append( serial->readAll());// data += serial->readAll();
 
-        qDebug() << "UART:" << data;
+        qDebug() << "UART:" << RcvBuf.data();
+
+        this->busy = false;
         //char tx[]="abcd";
         //serial->write(tx,4);
     }
 }
+val serialPort::parseFrame(void)
+{
+    int i = 0;
+    int j = 0;
+    int Crc = 0;
 
+    while(RcvBuf.length() >= FRAME_LENGTH)
+        while(RcvBuf.at(i++) == FRAME_HEAD ){
+            for(j=0; j<(FRAME_HEAD-1); j++){
+                Crc +=  RcvBuf.at(j);
+            }
+            if( RcvBuf.at(i+FRAME_HEAD-1) == (Crc & 0xff)){
+                switch(RcvBuf.at(i+FRAME_OFFSET_CMD)){
+                    case FRAME_CMD_QUATER:
+                         qDebug()<<"enter cmd_quater"<<endl;
+                         break;
+                    case FRAME_CMD_ACC:
+                         qDebug()<<"enter acc"<<endl;
+                         break;
+                    case FRAME_CMD_MAG:
+                         qDebug()<<"enter mag"<<endl;
+                         break;
+                    default: break;
+                }
+                RcvBuf.remove(0,FRAME_LENGTH);
+                break;
+            }else{
+                RcvBuf.remove(0,1);
+                break;
+            }
+        }//while
+}
+val serialPort::getQuternion(void)
+{
+    if(this->busy == false){
+        RcvBuf.at(0)
+        //QQuaternion quate();
+    }
+
+}
 
 
 void serialPort::handleError(QSerialPort::SerialPortError error)
