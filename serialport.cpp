@@ -58,6 +58,7 @@ int serialPort::openSerialPort(QString port)
         qCritical()<<com << " :Serial Port error:" << serial->errorString();
         qDebug() << tr("Open error");
     }
+    return 1;
 }
 void serialPort::run()
 {
@@ -66,7 +67,9 @@ void serialPort::run()
     while(true){
         readData();
         msleep(10);
-        //qDebug()<<"serial runing";
+        parseFrame();
+
+
     }
 }
 void serialPort::closeSerialPort()
@@ -87,37 +90,46 @@ bool serialPort::getBusy(void)
 {
     return this->busy;
 }
+
+// read data
 void serialPort::readData()
 {
-    // read data
+
     if (serial->waitForReadyRead(10) && this->busy == false) {
         this->busy = true;
         RcvBuf.append( serial->readAll());
-        while (serial->waitForReadyRead(10))
-             RcvBuf.append( serial->readAll());// data += serial->readAll();
-
-        qDebug() << "UART:" << RcvBuf.data();
-
         this->busy = false;
-        //char tx[]="abcd";
-        //serial->write(tx,4);
     }
 }
-val serialPort::parseFrame(void)
+void serialPort::parseFrame(void)
 {
-    int i = 0;
+    //int i = 0;
     int j = 0;
-    int Crc = 0;
+    unsigned char Crc = 0;
+    QString str;
 
-    while(RcvBuf.length() >= FRAME_LENGTH)
-        while(RcvBuf.at(i++) == FRAME_HEAD ){
-            for(j=0; j<(FRAME_HEAD-1); j++){
-                Crc +=  RcvBuf.at(j);
+    while(RcvBuf.length() >= FRAME_LENGTH){
+        while((unsigned char)RcvBuf.at(0) == FRAME_HEAD ){
+            str = RcvBuf.toHex();
+            for(j=0; j<FRAME_LENGTH -1; j++){
+                Crc += (unsigned char) RcvBuf.at(j);
             }
-            if( RcvBuf.at(i+FRAME_HEAD-1) == (Crc & 0xff)){
-                switch(RcvBuf.at(i+FRAME_OFFSET_CMD)){
+            //unsigned char tmp = RcvBuf.at(i-1+FRAME_OFFSET_CRC);
+            if(Crc){
+            //if((unsigned char)RcvBuf.at(FRAME_OFFSET_CRC) == Crc) {
+                switch(RcvBuf.at(FRAME_OFFSET_CMD)){
                     case FRAME_CMD_QUATER:
-                         qDebug()<<"enter cmd_quater"<<endl;
+                         Q4.setScalar( ((unsigned int)((unsigned int) (RcvBuf.at(3)<<8) \
+                                          | (unsigned char)RcvBuf.at(2)) &0xffff)/32768);
+                         Q4.setX( ( (unsigned int)((unsigned int) (RcvBuf.at(5)<<8) \
+                                          | (unsigned char)RcvBuf.at(4)) &0xffff)/32768);
+
+                         Q4.setY( ( (unsigned int)((unsigned int) (RcvBuf.at(7)<<8) \
+                                          | (unsigned char)RcvBuf.at(6)) &0xffff)/32768);
+                         Q4.setZ( (  (unsigned int)((unsigned int) (RcvBuf.at(9)<<8) \
+                                          | (unsigned char)RcvBuf.at(8)) &0xffff)/32768);
+                         qDebug()<<"enter quater"<<endl;
+                         qDebug("Q1=0x%f,Q2=0x%f,Q3=0x%f,Q4=0x%f",Q4.scalar(),Q4.x(),Q4.y(),Q4.z());
                          break;
                     case FRAME_CMD_ACC:
                          qDebug()<<"enter acc"<<endl;
@@ -127,18 +139,27 @@ val serialPort::parseFrame(void)
                          break;
                     default: break;
                 }
-                RcvBuf.remove(0,FRAME_LENGTH);
+                int len = RcvBuf.length();
+                if(len>=FRAME_LENGTH){
+                  RcvBuf.remove(0,FRAME_LENGTH -1);
+                }else{
+                  Q_ASSERT("remove failed");
+                }
                 break;
             }else{
-                RcvBuf.remove(0,1);
+                //RcvBuf.remove(0,1);
                 break;
             }
-        }//while
+
+        }//while2
+        RcvBuf.remove(0,1);
+        Crc = 0;
+      }//while1
 }
-val serialPort::getQuternion(void)
+void serialPort::getQuternion(void)
 {
     if(this->busy == false){
-        RcvBuf.at(0)
+       // RcvBuf.at(0);
         //QQuaternion quate();
     }
 

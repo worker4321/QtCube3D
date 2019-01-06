@@ -62,7 +62,7 @@ MainWidget::MainWidget(QWidget *parent) :
 
 {
 
-    serial = new serialPort("COM12");
+    serial = new serialPort("COM9");
     if(!serial){
         qDebug()<<"new serialPort failed,exit"<<endl;
         exit(-1);
@@ -214,13 +214,14 @@ void MainWidget::paintGL()
 
 //! [6]
     // Calculate model view transformation
-    int len = serial->RcvBuf.length();
-    if(len > FRAME_LENGTH){
-        serial->RcvBuf.remove(len -FRAME_LENGTH, FRAME_LENGTH);
-    }
+   // int len = serial->RcvBuf.length();
+   // if(len > FRAME_LENGTH){
+    //    serial->parseFrame();
+   // }
     QMatrix4x4 matrix;
     matrix.translate(0.0, 0.0, -5.0);
-    matrix.rotate(rotation);
+    //matrix.rotate(rotation);
+    matrix.rotate(serial->Q4);
 
     // Set modelview-projection matrix
     program.setUniformValue("mvp_matrix", projection * matrix);

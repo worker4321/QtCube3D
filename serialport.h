@@ -3,8 +3,9 @@
 
 #include <queue>
 #include <QThread>
-#include <QSerialPort>        //提供访问串口的功能
-#include <QSerialPortInfo>    //提供系统中存在的串口的信息
+#include <QSerialPort>
+#include <QSerialPortInfo>
+#include <QQuaternion>
 
 //head cmd  x                             CRC
 //0x55 0x51 AxL AxH AyL AyH AzL AzH TL TH SUM
@@ -15,17 +16,22 @@
 #define  FRAME_CMD_QUATER    0x59
 #define  FRAME_LENGTH        11
 #define  FRAME_OFFSET_CMD    1
+#define  FRAME_OFFSET_CRC    10
 class serialPort : public QThread
 {
 public:
     explicit serialPort(QString port);
     ~serialPort();
 
+    QByteArray RcvBuf;
+    QQuaternion Q4;
     int openSerialPort(QString port);
     void closeSerialPort();
     void setBusy(bool val);
     bool getBusy(void);
-    QByteArray RcvBuf;
+    void parseFrame(void);
+    void getQuternion(void);
+
 private:
     void writeData(const QByteArray &data);
     void readData();
