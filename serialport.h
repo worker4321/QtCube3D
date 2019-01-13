@@ -1,4 +1,4 @@
-#ifndef SERIALPORT_H
+ #ifndef SERIALPORT_H
 #define SERIALPORT_H
 
 #include <queue>

@@ -46,7 +46,7 @@ int serialPort::openSerialPort(QString port)
         return -1;
     }
     serial->setPortName(com);
-    serial->setBaudRate(QSerialPort::Baud115200);
+    serial->setBaudRate(QSerialPort::Baud9600);
     serial->setDataBits(QSerialPort::Data8);
     serial->setParity(QSerialPort::NoParity);
     serial->setStopBits(QSerialPort::OneStop);
@@ -95,15 +95,28 @@ bool serialPort::getBusy(void)
 void serialPort::readData()
 {
 
-    if (serial->waitForReadyRead(10) && this->busy == false) {
+    if (serial->waitForReadyRead() && this->busy == false) {
         this->busy = true;
         RcvBuf.append( serial->readAll());
         this->busy = false;
     }
 }
+float hex2Int(char high,char low)
+{
+  float val;
+  short int tmp = (short) high<<8 | low ;
+  if(tmp & 0x8000){ //补码判断
+      tmp = ~tmp;
+      tmp +=1;
+      tmp = -tmp;
+    }
+   val = (float)tmp/32768;
+   return val;
+}
 void serialPort::parseFrame(void)
 {
-    //int i = 0;
+    float tmp;
+    uint8_t data[FRAME_LENGTH];
     int j = 0;
     unsigned char Crc = 0;
     QString str;
@@ -113,23 +126,32 @@ void serialPort::parseFrame(void)
             str = RcvBuf.toHex();
             for(j=0; j<FRAME_LENGTH -1; j++){
                 Crc += (unsigned char) RcvBuf.at(j);
+                data[j] = (unsigned char) RcvBuf.at(j);
             }
             //unsigned char tmp = RcvBuf.at(i-1+FRAME_OFFSET_CRC);
             if(Crc){
             //if((unsigned char)RcvBuf.at(FRAME_OFFSET_CRC) == Crc) {
                 switch(RcvBuf.at(FRAME_OFFSET_CMD)){
                     case FRAME_CMD_QUATER:
-                         Q4.setScalar( ((unsigned int)((unsigned int) (RcvBuf.at(3)<<8) \
-                                          | (unsigned char)RcvBuf.at(2)) &0xffff)/32768);
-                         Q4.setX( ( (unsigned int)((unsigned int) (RcvBuf.at(5)<<8) \
-                                          | (unsigned char)RcvBuf.at(4)) &0xffff)/32768);
+                         //tmp = (float)(((short) data[3]<<8) | data[2]);
+                         Q4.setScalar(hex2Int(data[3],data[2]));
 
-                         Q4.setY( ( (unsigned int)((unsigned int) (RcvBuf.at(7)<<8) \
-                                          | (unsigned char)RcvBuf.at(6)) &0xffff)/32768);
-                         Q4.setZ( (  (unsigned int)((unsigned int) (RcvBuf.at(9)<<8) \
-                                          | (unsigned char)RcvBuf.at(8)) &0xffff)/32768);
+                         //tmp = (( data[5]<<8) | data[4]);
+                         //qDebug("tmp1=%f",tmp);
+                          Q4.setX(hex2Int(data[5],data[4]));
+                          Q4.setY(hex2Int(data[7],data[6]));
+                          Q4.setZ(hex2Int(data[9],data[8]));
+
+
+/*
+                         tmp = ( float) (data[7]<<8 | data[6] &0xffff);
+                         Q4.setY(tmp/32768);
+
+                         tmp = ( float) (data[9]<<8 | data[8] &0xffff);
+                         Q4.setZ(tmp/32768);
+           */
                          qDebug()<<"enter quater"<<endl;
-                         qDebug("Q1=0x%f,Q2=0x%f,Q3=0x%f,Q4=0x%f",Q4.scalar(),Q4.x(),Q4.y(),Q4.z());
+                         qDebug("Qw=%f,Qx=%f,Qy=%f,Qz=%f",Q4.scalar(),Q4.x(),Q4.y(),Q4.z());
                          break;
                     case FRAME_CMD_ACC:
                          qDebug()<<"enter acc"<<endl;
