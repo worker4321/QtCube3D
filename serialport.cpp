@@ -101,10 +101,10 @@ void serialPort::readData()
         this->busy = false;
     }
 }
-float hex2Int(char high,char low)
+float hex2Int(unsigned char high,unsigned char low)
 {
   float val;
-  short int tmp = (short) high<<8 | low ;
+  short tmp = (short) (high<<8 | low) &0xffff;
   if(tmp & 0x8000){ //补码判断
       tmp = ~tmp;
       tmp +=1;

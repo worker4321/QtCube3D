@@ -62,7 +62,7 @@ MainWidget::MainWidget(QWidget *parent) :
 
 {
 
-    serial = new serialPort("COM9");
+    serial = new serialPort("COM12");
     if(!serial){
         qDebug()<<"new serialPort failed,exit"<<endl;
         exit(-1);
@@ -106,7 +106,42 @@ void MainWidget::mouseReleaseEvent(QMouseEvent *e)
     angularSpeed += acc;
 }
 //! [0]
+void  MainWidget::update2(void)
+{
+    // Clear color and depth buffer
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    texture->bind();
+
+//! [6]
+    // Calculate model view transformation
+   // int len = serial->RcvBuf.length();
+   // if(len > FRAME_LENGTH){
+    //    serial->parseFrame();
+   // }
+    QMatrix4x4 matrix;
+    matrix.translate(0.0, 0.0, -5.0);
+    if(rotationOld == rotation){
+        matrix.rotate(serial->Q4);
+        qDebug("rotate");
+    }else{
+        matrix.rotate(rotation);
+        rotationOld = rotation;
+        qDebug("rotateOld");
+    }
+
+    // Set modelview-projection matrix
+    program.setUniformValue("mvp_matrix", projection * matrix);
+
+//! [6]
+
+    // Use texture unit 0 which contains cube.png
+    program.setUniformValue("texture", 0);
+
+    // Draw cube geometry
+    geometries->drawCubeGeometry(&program);
+    update();
+}
 //! [1]
 void MainWidget::timerEvent(QTimerEvent *)
 {
@@ -119,10 +154,12 @@ void MainWidget::timerEvent(QTimerEvent *)
     } else {
         // Update rotation
         rotation = QQuaternion::fromAxisAndAngle(rotationAxis, angularSpeed) * rotation;
-
+         //update2();
         // Request an update
         update();
     }
+
+
 }
 //! [1]
 
@@ -207,6 +244,8 @@ void MainWidget::resizeGL(int w, int h)
 
 void MainWidget::paintGL()
 {
+    update2();
+#if 0
     // Clear color and depth buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -233,4 +272,5 @@ void MainWidget::paintGL()
 
     // Draw cube geometry
     geometries->drawCubeGeometry(&program);
+#endif
 }

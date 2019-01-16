@@ -62,6 +62,7 @@
 #include <QOpenGLShaderProgram>
 #include <QOpenGLTexture>
 #include "serialport.h"
+#include <QDebug>
 
 class GeometryEngine;
 
@@ -74,6 +75,7 @@ public:
     ~MainWidget();
 
 protected:
+    void update2(void);
     void mousePressEvent(QMouseEvent *e) override;
     void mouseReleaseEvent(QMouseEvent *e) override;
     void timerEvent(QTimerEvent *e) override;
@@ -98,6 +100,7 @@ private:
     QVector3D rotationAxis;
     qreal angularSpeed;
     QQuaternion rotation;
+    QQuaternion rotationOld;
     serialPort *serial;
 };
 
