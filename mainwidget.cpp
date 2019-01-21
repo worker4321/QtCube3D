@@ -53,16 +53,37 @@
 #include <math.h>
 #include <serialport.h>
 #include <stdlib.h>
+#include <QtSerialPort/QSerialPortInfo>
 
 MainWidget::MainWidget(QWidget *parent) :
     QOpenGLWidget(parent),
     geometries(0),
     texture(0),
     angularSpeed(0)
-
 {
+    serialPortLabel= new QLabel(tr("port:"));
+    serialPortComboBox = new QComboBox();
+    statusLabel= new QLabel(tr("Status: Not running."));
+    runButton = new QPushButton(tr("Start"));
+    const auto infos = QSerialPortInfo::availablePorts();
+    for (const QSerialPortInfo &info : infos)
+        serialPortComboBox->addItem(info.portName());
 
-    serial = new serialPort("COM12");
+    auto mainLayout = new QHBoxLayout;
+    mainLayout->addStretch();
+    mainLayout->setAlignment(Qt::AlignTop);
+    mainLayout->addWidget(serialPortLabel);
+    mainLayout->addWidget(serialPortComboBox);
+    mainLayout->addWidget(runButton);
+    mainLayout->addWidget(statusLabel);
+    setLayout(mainLayout);
+    setWindowTitle(tr("Serial"));
+    serialPortComboBox->setFocus();
+   // connect(runButton, &QPushButton::clicked, this, &Dialog::startSlave);
+    //connect(serialPortComboBox, static_cast<void (QComboBox::*)(const QString &)>(&QComboBox::currentIndexChanged),
+     //       this, &Dialog::activateRunButton);
+
+    serial = new serialPort("COM1");
     if(!serial){
         qDebug()<<"new serialPort failed,exit"<<endl;
         exit(-1);
@@ -167,7 +188,7 @@ void MainWidget::initializeGL()
 {
     initializeOpenGLFunctions();
 
-    glClearColor(0, 0, 0, 1);
+    glClearColor(1, 1, 1, 1);
 
     initShaders();
     initTextures();

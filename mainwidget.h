@@ -63,6 +63,16 @@
 #include <QOpenGLTexture>
 #include "serialport.h"
 #include <QDebug>
+#include <QLabel>
+#include <QLineEdit>
+#include <QComboBox>
+#include <QPushButton>
+#include <QHBoxLayout>
+
+class QLabel;
+class QLineEdit;
+class QComboBox;
+class QPushButton;
 
 class GeometryEngine;
 
@@ -101,7 +111,20 @@ private:
     qreal angularSpeed;
     QQuaternion rotation;
     QQuaternion rotationOld;
+
+    //for serialPort
     serialPort *serial;
+    QLabel *serialPortLabel;
+    QComboBox *serialPortComboBox;
+    QLabel *waitRequestLabel;
+    QLabel *statusLabel;
+    QPushButton *runButton;
+private slots:
+    //void startSlave();
+    //void activateRunButton();
+
+
+
 };
 
 #endif // MAINWIDGET_H
