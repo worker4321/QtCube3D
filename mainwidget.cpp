@@ -79,16 +79,11 @@ MainWidget::MainWidget(QWidget *parent) :
     setLayout(mainLayout);
     setWindowTitle(tr("Serial"));
     serialPortComboBox->setFocus();
-   // connect(runButton, &QPushButton::clicked, this, &Dialog::startSlave);
+    connect(runButton, &QPushButton::clicked, this, &MainWidget::BtnRun);
     //connect(serialPortComboBox, static_cast<void (QComboBox::*)(const QString &)>(&QComboBox::currentIndexChanged),
      //       this, &Dialog::activateRunButton);
+    serial = NULL;
 
-    serial = new serialPort("COM1");
-    if(!serial){
-        qDebug()<<"new serialPort failed,exit"<<endl;
-        exit(-1);
-    }
-    serial->start();
 }
 
 MainWidget::~MainWidget()
@@ -96,6 +91,7 @@ MainWidget::~MainWidget()
     // Make sure the context is current when deleting the texture
     // and the buffers.
     makeCurrent();
+    if(serial)  delete serial;
     delete texture;
     delete geometries;
     doneCurrent();
@@ -107,7 +103,25 @@ void MainWidget::mousePressEvent(QMouseEvent *e)
     // Save mouse press position
     mousePressPosition = QVector2D(e->localPos());
 }
+void MainWidget::BtnRun(void)
+{
+  if( serial){
+       //serial->closeSerialPort();
+       serial->setBusy(true);
 
+       serial = NULL;
+       runButton->setText("closed");
+  }else{
+      QString com = serialPortComboBox->currentText();
+      serial = new serialPort(com);
+      if(!serial){
+          qDebug()<<"new serialPort failed,exit"<<endl;
+          return;
+      }
+      serial->start();
+      runButton->setText("running");
+  }
+}
 void MainWidget::mouseReleaseEvent(QMouseEvent *e)
 {
     // Mouse release position - mouse press position
@@ -142,7 +156,7 @@ void  MainWidget::update2(void)
    // }
     QMatrix4x4 matrix;
     matrix.translate(0.0, 0.0, -5.0);
-    if(rotationOld == rotation){
+    if(rotationOld == rotation && serial ){
         matrix.rotate(serial->Q4);
         qDebug("rotate");
     }else{

@@ -86,6 +86,7 @@ public:
 
 protected:
     void update2(void);
+
     void mousePressEvent(QMouseEvent *e) override;
     void mouseReleaseEvent(QMouseEvent *e) override;
     void timerEvent(QTimerEvent *e) override;
@@ -119,7 +120,9 @@ private:
     QLabel *waitRequestLabel;
     QLabel *statusLabel;
     QPushButton *runButton;
+
 private slots:
+    void BtnRun(void);
     //void startSlave();
     //void activateRunButton();
 

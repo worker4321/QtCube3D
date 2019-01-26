@@ -64,13 +64,15 @@ void serialPort::run()
 {
     qDebug()<<"serial open com:"<<com<<endl;
     openSerialPort(com);
-    while(true){
+    while(!this->busy){
         readData();
         msleep(10);
         parseFrame();
-
-
     }
+    serial->close();
+    this->quit();
+    qDebug("thread exit");
+
 }
 void serialPort::closeSerialPort()
 {
@@ -94,12 +96,12 @@ bool serialPort::getBusy(void)
 // read data
 void serialPort::readData()
 {
-
-    if (serial->waitForReadyRead() && this->busy == false) {
-        this->busy = true;
+      if (serial->waitForReadyRead() && this->busy == false) {
+       // this->busy = true;
         RcvBuf.append( serial->readAll());
-        this->busy = false;
-    }
+        //this->busy = false;
+       }
+
 }
 float hex2Int(unsigned char high,unsigned char low)
 {
@@ -115,7 +117,7 @@ float hex2Int(unsigned char high,unsigned char low)
 }
 void serialPort::parseFrame(void)
 {
-    float tmp;
+    //float tmp;
     uint8_t data[FRAME_LENGTH];
     int j = 0;
     unsigned char Crc = 0;
@@ -199,4 +201,5 @@ void serialPort::handleError(QSerialPort::SerialPortError error)
 serialPort::~serialPort()
 {
     closeSerialPort();
+    this->quit();
 }
